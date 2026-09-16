@@ -44,38 +44,49 @@ export class LadderClient {
 
   static async fetchChannelUsers(channelId: string): Promise<Array<{ id: string; name: string }>> {
     try {
-      // 1. Fetch channel members
-      const membersRes = await fetch(`/api/v4/channels/${channelId}/members?page=0&per_page=60`, {
+      // 1. Try Mattermost active users in channel API first
+      const activeUsersRes = await fetch(`/api/v4/users?in_channel=${channelId}&active=true&per_page=100`, {
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
       });
-      if (!membersRes.ok) return [];
-      const members: Array<{ user_id: string }> = await membersRes.json();
-      const userIds = members.map((m) => m.user_id);
 
-      if (userIds.length === 0) return [];
-
-      // 2. Fetch user profiles
-      const usersRes = await fetch(`/api/v4/users/ids`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: JSON.stringify(userIds),
-      });
-      if (!usersRes.ok) return [];
-
-      const users: Array<{
+      let rawUsers: Array<{
         id: string;
         username: string;
         nickname?: string;
         first_name?: string;
         last_name?: string;
         is_bot?: boolean;
-      }> = await usersRes.json();
+        delete_at?: number;
+      }> = [];
 
-      return users
-        .filter((u) => !u.is_bot)
+      if (activeUsersRes.ok) {
+        rawUsers = await activeUsersRes.json();
+      } else {
+        // Fallback: Fetch channel members and then user profiles
+        const membersRes = await fetch(`/api/v4/channels/${channelId}/members?page=0&per_page=100`, {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        if (!membersRes.ok) return [];
+        const members: Array<{ user_id: string }> = await membersRes.json();
+        const userIds = members.map((m) => m.user_id);
+
+        if (userIds.length === 0) return [];
+
+        const usersRes = await fetch(`/api/v4/users/ids`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify(userIds),
+        });
+        if (!usersRes.ok) return [];
+        rawUsers = await usersRes.json();
+      }
+
+      // Filter out bots and deactivated (delete_at > 0) users
+      return rawUsers
+        .filter((u) => !u.is_bot && (!u.delete_at || u.delete_at === 0))
         .map((u) => {
           let name = u.nickname || '';
           if (!name && (u.first_name || u.last_name)) {
