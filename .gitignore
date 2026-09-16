@@ -1,0 +1,14 @@
+# Binaries and archives
+dist/
+*.tar.gz
+
+# Node / Webapp
+webapp/node_modules/
+webapp/dist/
+
+# macOS
+.DS_Store
+
+# Go
+*.test
+vendor/

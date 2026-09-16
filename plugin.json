@@ -1,0 +1,21 @@
+{
+  "id": "com.mattermost.ladder-game",
+  "name": "Ladder Game",
+  "description": "Mattermost 사다리 타기(Ghost Leg) 게임 플러그인 - 채널 멤버들과 점심/커피/순서 정하기를 인터랙티브하게 즐겨보세요.",
+  "homepage_url": "https://github.com/mattermost-plugins/mattermost-ladder-game",
+  "support_url": "https://github.com/mattermost-plugins/mattermost-ladder-game/issues",
+  "version": "0.1.0",
+  "icon_path": "assets/icon.svg",
+  "min_server_version": "7.0.0",
+  "server": {
+    "executables": {
+      "linux-amd64": "server/dist/plugin-linux-amd64",
+      "darwin-amd64": "server/dist/plugin-darwin-amd64",
+      "darwin-arm64": "server/dist/plugin-darwin-arm64",
+      "windows-amd64": "server/dist/plugin-windows-amd64.exe"
+    }
+  },
+  "webapp": {
+    "bundle_path": "webapp/dist/main.js"
+  }
+}
